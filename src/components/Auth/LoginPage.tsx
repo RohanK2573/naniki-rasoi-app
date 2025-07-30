@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { springBootAuth } from "@/services/springBootAuth";
+import SocialAuthButtons from "./SocialAuthButtons";
 
 interface LoginPageProps {
   onLogin: (token: string, user: any) => void;
@@ -22,40 +24,31 @@ const LoginPage = ({ onLogin, onSwitchToSignup, onBack }: LoginPageProps) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+      const data = await springBootAuth.login({ email, password });
+      springBootAuth.saveAuthData(data.token, data.user);
+      onLogin(data.token, data.user);
+      toast({
+        title: "Login successful!",
+        description: "Welcome to Nani ki Rasoi",
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('authToken', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        onLogin(data.token, data.user);
-        toast({
-          title: "Login successful!",
-          description: "Welcome to Nani ki Rasoi",
-        });
-      } else {
-        toast({
-          title: "Login failed",
-          description: data.message || "Please check your credentials",
-          variant: "destructive",
-        });
-      }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Unable to connect to server",
+        title: "Login failed",
+        description: error instanceof Error ? error.message : "Please check your credentials",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSocialSuccess = (token: string, user: any) => {
+    springBootAuth.saveAuthData(token, user);
+    onLogin(token, user);
+    toast({
+      title: "Login successful!",
+      description: "Welcome to Nani ki Rasoi",
+    });
   };
 
   return (
@@ -93,6 +86,9 @@ const LoginPage = ({ onLogin, onSwitchToSignup, onBack }: LoginPageProps) => {
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
+          
+          <SocialAuthButtons onSuccess={handleSocialSuccess} disabled={isLoading} />
+          
           <div className="mt-6 text-center space-y-2">
             <p className="text-sm text-muted-foreground">
               Don't have an account?{" "}

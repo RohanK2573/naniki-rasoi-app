@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { springBootAuth } from "@/services/springBootAuth";
+import SocialAuthButtons from "./SocialAuthButtons";
 
 interface SignupPageProps {
   onSignup: (token: string, user: any) => void;
@@ -48,49 +50,42 @@ const SignupPage = ({ onSignup, onSwitchToLogin, onBack }: SignupPageProps) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phoneNumber: formData.phoneNumber,
-          address: formData.address,
-          city: formData.city,
-          zipCode: formData.zipCode,
-          password: formData.password,
-        }),
+      const userData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phoneNumber: formData.phoneNumber,
+        address: formData.address,
+        city: formData.city,
+        zipCode: formData.zipCode,
+        password: formData.password,
+      };
+
+      const data = await springBootAuth.signup(userData);
+      springBootAuth.saveAuthData(data.token, data.user);
+      onSignup(data.token, data.user);
+      toast({
+        title: "Account created!",
+        description: "Welcome to Nani ki Rasoi",
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('authToken', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        onSignup(data.token, data.user);
-        toast({
-          title: "Account created!",
-          description: "Welcome to Nani ki Rasoi",
-        });
-      } else {
-        toast({
-          title: "Signup failed",
-          description: data.message || "Please try again",
-          variant: "destructive",
-        });
-      }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Unable to connect to server",
+        title: "Signup failed",
+        description: error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSocialSuccess = (token: string, user: any) => {
+    springBootAuth.saveAuthData(token, user);
+    onSignup(token, user);
+    toast({
+      title: "Account created!",
+      description: "Welcome to Nani ki Rasoi",
+    });
   };
 
   return (
@@ -213,6 +208,9 @@ const SignupPage = ({ onSignup, onSwitchToLogin, onBack }: SignupPageProps) => {
               {isLoading ? "Creating account..." : "Create Account"}
             </Button>
           </form>
+          
+          <SocialAuthButtons onSuccess={handleSocialSuccess} disabled={isLoading} />
+          
           <div className="mt-6 text-center space-y-2">
             <p className="text-sm text-muted-foreground">
               Already have an account?{" "}
