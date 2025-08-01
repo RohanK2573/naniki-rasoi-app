@@ -1,5 +1,5 @@
 // Spring Boot Authentication Service
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 export interface LoginCredentials {
   email: string;
@@ -120,6 +120,44 @@ class SpringBootAuthService {
 
   isAuthenticated(): boolean {
     return !!this.getAuthToken();
+  }
+
+  async fetchCookDetails(cookId: string): Promise<any> {
+    const token = this.getAuthToken();
+    const response = await this.makeRequest(`/api/cooks/${cookId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to fetch cook details');
+    }
+
+    return data;
+  }
+
+  async fetchAllCooks(city?: string): Promise<any[]> {
+    const token = this.getAuthToken();
+    const url = city ? `/api/cooks?city=${encodeURIComponent(city)}` : '/api/cooks';
+    
+    const response = await this.makeRequest(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to fetch cooks');
+    }
+
+    return data;
   }
 }
 

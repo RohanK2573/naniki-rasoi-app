@@ -5,6 +5,7 @@ import HomePage from "@/components/HomePage";
 import CookProfile from "@/components/CookProfile";
 import LoginPage from "@/components/Auth/LoginPage";
 import SignupPage from "@/components/Auth/SignupPage";
+import { springBootAuth } from "@/services/springBootAuth";
 
 type AppState = "splash" | "city-selection" | "home" | "cook-profile" | "login" | "signup";
 
@@ -16,12 +17,12 @@ const Index = () => {
   const [authToken, setAuthToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check for existing auth token on app load
-    const token = localStorage.getItem('authToken');
-    const savedUser = localStorage.getItem('user');
+    // Check for existing auth token on app load using the auth service
+    const token = springBootAuth.getAuthToken();
+    const savedUser = springBootAuth.getUser();
     if (token && savedUser) {
       setAuthToken(token);
-      setUser(JSON.parse(savedUser));
+      setUser(savedUser);
     }
   }, []);
 
@@ -61,8 +62,8 @@ const Index = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
+    // Use springBootAuth service to ensure complete logout
+    springBootAuth.logout();
     setAuthToken(null);
     setUser(null);
     setAppState("splash");

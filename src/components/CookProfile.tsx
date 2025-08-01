@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Star, Clock, MapPin, Heart, Phone, MessageCircle, ArrowLeft } from "lucide-react";
+import { Star, Clock, MapPin, Heart, Phone, MessageCircle, ArrowLeft, ShoppingCart } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { springBootAuth } from "@/services/springBootAuth";
 import cookImage from "@/assets/cook-profile.jpg";
 
 interface CookProfileProps {
@@ -12,21 +14,54 @@ interface CookProfileProps {
   onSelectPlan: () => void;
 }
 
+interface CartItem {
+  id: string;
+  name: string;
+  price: string;
+  quantity: number;
+}
+
 const CookProfile = ({ cookId, onBack, onSelectPlan }: CookProfileProps) => {
   const [selectedMealType, setSelectedMealType] = useState("lunch");
+  const [cookData, setCookData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const { toast } = useToast();
 
-  // Mock data - in real app, fetch based on cookId
-  const cookData = {
-    name: "Sunita Auntie",
-    rating: 4.8,
-    totalReviews: 156,
-    speciality: "North Indian Home Style",
-    area: "Bandra West, Mumbai",
-    experience: "15+ years",
-    image: cookImage,
-    description: "I have been cooking traditional North Indian meals for my family for over 15 years. Now I want to share the love and taste of home-cooked food with more people. All my meals are prepared fresh daily with pure ingredients and lots of love.",
-    tags: ["Homestyle", "Healthy", "No Preservatives", "Fresh Daily"]
-  };
+  // Fetch cook data from backend
+  useEffect(() => {
+    const fetchCookData = async () => {
+      try {
+        setLoading(true);
+        // Uncomment when backend is ready
+        // const data = await springBootAuth.fetchCookDetails(cookId);
+        // setCookData(data);
+        
+        // Mock data for now - will be replaced with backend data
+        setCookData({
+          name: "Sunita Auntie",
+          rating: 4.8,
+          totalReviews: 156,
+          speciality: "North Indian Home Style",
+          area: "Bandra West, Mumbai",
+          experience: "15+ years",
+          image: cookImage,
+          description: "I have been cooking traditional North Indian meals for my family for over 15 years. Now I want to share the love and taste of home-cooked food with more people. All my meals are prepared fresh daily with pure ingredients and lots of love.",
+          tags: ["Homestyle", "Healthy", "No Preservatives", "Fresh Daily"]
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load cook details",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCookData();
+  }, [cookId, toast]);
 
   const menuItems = {
     lunch: [
@@ -89,6 +124,52 @@ const CookProfile = ({ cookId, onBack, onSelectPlan }: CookProfileProps) => {
       popular: false
     }
   ];
+
+  const addToCart = (item: any) => {
+    const existingItem = cart.find(cartItem => cartItem.id === `${item.name}-${selectedMealType}`);
+    
+    if (existingItem) {
+      setCart(cart.map(cartItem => 
+        cartItem.id === existingItem.id 
+          ? { ...cartItem, quantity: cartItem.quantity + 1 }
+          : cartItem
+      ));
+    } else {
+      setCart([...cart, {
+        id: `${item.name}-${selectedMealType}`,
+        name: `${item.name} (${selectedMealType})`,
+        price: item.price,
+        quantity: 1
+      }]);
+    }
+    
+    toast({
+      title: "Added to cart",
+      description: `${item.name} added to your cart`,
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading cook details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!cookData) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p>Cook not found</p>
+          <Button onClick={onBack} className="mt-4">Back to Home</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -200,7 +281,14 @@ const CookProfile = ({ cookId, onBack, onSelectPlan }: CookProfileProps) => {
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-lg">{item.price}</p>
-                        <Button variant="food" size="sm">Add to Cart</Button>
+                        <Button 
+                          variant="food" 
+                          size="sm"
+                          onClick={() => addToCart(item)}
+                        >
+                          <ShoppingCart className="h-3 w-3 mr-1" />
+                          Add to Cart
+                        </Button>
                       </div>
                     </div>
                   ))}
