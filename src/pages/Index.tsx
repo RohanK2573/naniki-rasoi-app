@@ -24,7 +24,35 @@ const Index = () => {
       setAuthToken(token);
       setUser(savedUser);
     }
+
+    // Handle OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const isOAuthCallback = window.location.pathname === '/oauth/callback' || urlParams.get('code');
+    
+    if (isOAuthCallback) {
+      handleOAuthCallback();
+    }
   }, []);
+
+  const handleOAuthCallback = async () => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const provider = urlParams.get('provider') || 'google'; // default to google
+      
+      const { token, user } = await springBootAuth.handleOAuthCallback(provider);
+      springBootAuth.saveAuthData(token, user);
+      setAuthToken(token);
+      setUser(user);
+      
+      // Clean up URL and redirect to city selection
+      window.history.replaceState({}, document.title, '/');
+      setAppState("city-selection");
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      // If OAuth fails, go back to splash
+      setAppState("splash");
+    }
+  };
 
   const handleSplashComplete = () => {
     setAppState("city-selection");

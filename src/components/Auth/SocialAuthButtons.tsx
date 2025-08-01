@@ -13,6 +13,10 @@ const SocialAuthButtons = ({ onSuccess, disabled }: SocialAuthButtonsProps) => {
 
   const handleGoogleLogin = async () => {
     try {
+      toast({
+        title: "Redirecting...",
+        description: "Taking you to Google login",
+      });
       await springBootAuth.loginWithGoogle();
     } catch (error) {
       toast({
@@ -25,6 +29,10 @@ const SocialAuthButtons = ({ onSuccess, disabled }: SocialAuthButtonsProps) => {
 
   const handleFacebookLogin = async () => {
     try {
+      toast({
+        title: "Redirecting...",
+        description: "Taking you to Facebook login",
+      });
       await springBootAuth.loginWithFacebook();
     } catch (error) {
       toast({
