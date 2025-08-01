@@ -22,8 +22,8 @@ const SplashScreen = ({ onComplete, onLogin, onSignup, user, onLogout }: SplashS
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-warm">
-      <div className="text-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-warm min-h-screen">
+      <div className="text-center px-6 max-w-md mx-auto">
         <div className="mb-8 animate-pulse">
           <img
             src={logoImage}
@@ -31,53 +31,60 @@ const SplashScreen = ({ onComplete, onLogin, onSignup, user, onLogout }: SplashS
             className="w-32 h-32 mx-auto rounded-full shadow-warm"
           />
         </div>
-        <h1 className="text-4xl font-bold text-primary-foreground mb-2">
+        <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg">
           Nani ki Rasoi
         </h1>
-        <p className="text-primary-foreground/80 text-lg mb-8">
+        <p className="text-white/90 text-lg mb-8 drop-shadow">
           Ghar jaisa khana, sirf aapke liye
         </p>
         
         {showAuth && (
-          <div className="animate-fade-in">
+          <div className="animate-fade-in space-y-6">
             {user ? (
               <div className="flex flex-col items-center gap-4">
-                <p className="text-lg text-primary-foreground/90">Welcome back, {user.firstName}!</p>
-                <div className="flex gap-4">
+                <p className="text-lg text-white/95 font-medium drop-shadow">
+                  Welcome back, {user.firstName || user.name || 'User'}!
+                </p>
+                <div className="flex flex-col gap-3 w-full">
                   <Button 
                     onClick={onComplete}
                     size="lg" 
-                    className="text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                    variant="default"
+                    className="w-full text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 bg-white text-primary hover:bg-white/90"
                   >
-                    Continue
+                    Continue to App
                   </Button>
                   <Button 
                     onClick={onLogout}
                     variant="outline"
                     size="lg" 
-                    className="text-lg px-8 py-6 rounded-xl border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
+                    className="w-full text-lg px-8 py-6 rounded-xl border-2 border-white/30 text-white hover:bg-white/20 hover:border-white/50 backdrop-blur-sm"
                   >
                     Logout
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4 w-full">
                 <Button 
                   onClick={onLogin}
                   size="lg" 
-                  className="text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  variant="default"
+                  className="w-full text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 bg-white text-primary hover:bg-white/90 font-semibold"
                 >
-                  Login
+                  Login to Your Account
                 </Button>
                 <Button 
                   onClick={onSignup}
                   variant="outline"
                   size="lg" 
-                  className="text-lg px-8 py-6 rounded-xl border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
+                  className="w-full text-lg px-8 py-6 rounded-xl border-2 border-white/40 text-white hover:bg-white/20 hover:border-white/60 backdrop-blur-sm font-semibold"
                 >
-                  Sign Up
+                  Create New Account
                 </Button>
+                <p className="text-white/70 text-sm mt-2">
+                  Join thousands of food lovers already using our app
+                </p>
               </div>
             )}
           </div>
