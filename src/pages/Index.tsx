@@ -126,11 +126,17 @@ const Index = () => {
           onBack={handleAuthBack}
         />
       )}
-      {appState === "city-selection" && <CitySelector onCitySelect={handleCitySelect} />}
+      {appState === "city-selection" && (
+        <CitySelector 
+          onCitySelect={handleCitySelect} 
+          onLogout={handleLogout}
+        />
+      )}
       {appState === "home" && (
         <HomePage 
           selectedCity={selectedCity} 
           onCookSelect={handleCookSelect}
+          onLogout={handleLogout}
         />
       )}
       {appState === "cook-profile" && (
@@ -138,6 +144,7 @@ const Index = () => {
           cookId={selectedCookId}
           onBack={handleBackToHome}
           onSelectPlan={handleSelectPlan}
+          onLogout={handleLogout}
         />
       )}
     </>

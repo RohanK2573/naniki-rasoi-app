@@ -9,9 +9,10 @@ import cookImage from "@/assets/cook-profile.jpg";
 interface HomePageProps {
   selectedCity: string;
   onCookSelect: (cookId: string) => void;
+  onLogout?: () => void;
 }
 
-const HomePage = ({ selectedCity, onCookSelect }: HomePageProps) => {
+const HomePage = ({ selectedCity, onCookSelect, onLogout }: HomePageProps) => {
   const [favorites, setFavorites] = useState<string[]>([]);
 
   const featuredCooks = [
@@ -83,9 +84,20 @@ const HomePage = ({ selectedCity, onCookSelect }: HomePageProps) => {
                 Delivering in {selectedCity}
               </div>
             </div>
-            <Button variant="outline" className="bg-primary-foreground text-primary">
-              Change Location
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" className="bg-primary-foreground text-primary">
+                Change Location
+              </Button>
+              {onLogout && (
+                <Button 
+                  variant="outline" 
+                  className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+                  onClick={onLogout}
+                >
+                  Logout
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>

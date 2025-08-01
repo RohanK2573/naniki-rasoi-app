@@ -12,6 +12,7 @@ interface CookProfileProps {
   cookId: string;
   onBack: () => void;
   onSelectPlan: () => void;
+  onLogout?: () => void;
 }
 
 interface CartItem {
@@ -21,7 +22,7 @@ interface CartItem {
   quantity: number;
 }
 
-const CookProfile = ({ cookId, onBack, onSelectPlan }: CookProfileProps) => {
+const CookProfile = ({ cookId, onBack, onSelectPlan, onLogout }: CookProfileProps) => {
   const [selectedMealType, setSelectedMealType] = useState("lunch");
   const [cookData, setCookData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -176,14 +177,25 @@ const CookProfile = ({ cookId, onBack, onSelectPlan }: CookProfileProps) => {
       {/* Header */}
       <div className="bg-gradient-warm p-4">
         <div className="max-w-4xl mx-auto">
-          <Button 
-            variant="ghost" 
-            onClick={onBack}
-            className="text-primary-foreground hover:bg-primary-foreground/20 mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
-          </Button>
+          <div className="flex justify-between items-center mb-4">
+            <Button 
+              variant="ghost" 
+              onClick={onBack}
+              className="text-primary-foreground hover:bg-primary-foreground/20"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
+            {onLogout && (
+              <Button 
+                variant="outline" 
+                className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+                onClick={onLogout}
+              >
+                Logout
+              </Button>
+            )}
+          </div>
           
           <div className="flex flex-col md:flex-row gap-6 text-primary-foreground">
             <img

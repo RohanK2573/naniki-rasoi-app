@@ -50,7 +50,7 @@ const SplashScreen = ({ onComplete, onLogin, onSignup, user, onLogout }: SplashS
                     onClick={onComplete}
                     size="lg" 
                     variant="default"
-                    className="w-full text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 bg-white text-primary hover:bg-white/90"
+                    className="w-full text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 bg-white text-primary hover:bg-white/90 font-semibold"
                   >
                     Continue to App
                   </Button>
@@ -58,7 +58,7 @@ const SplashScreen = ({ onComplete, onLogin, onSignup, user, onLogout }: SplashS
                     onClick={onLogout}
                     variant="outline"
                     size="lg" 
-                    className="w-full text-lg px-8 py-6 rounded-xl border-2 border-white/30 text-white hover:bg-white/20 hover:border-white/50 backdrop-blur-sm"
+                    className="w-full text-lg px-8 py-6 rounded-xl border-2 border-white/40 text-white hover:bg-white/20 hover:border-white/60 backdrop-blur-sm font-semibold bg-white/10"
                   >
                     Logout
                   </Button>
@@ -78,7 +78,7 @@ const SplashScreen = ({ onComplete, onLogin, onSignup, user, onLogout }: SplashS
                   onClick={onSignup}
                   variant="outline"
                   size="lg" 
-                  className="w-full text-lg px-8 py-6 rounded-xl border-2 border-white/40 text-white hover:bg-white/20 hover:border-white/60 backdrop-blur-sm font-semibold"
+                  className="w-full text-lg px-8 py-6 rounded-xl border-2 border-white text-white hover:bg-white/20 hover:border-white backdrop-blur-sm font-semibold bg-white/10 hover:bg-white/30"
                 >
                   Create New Account
                 </Button>

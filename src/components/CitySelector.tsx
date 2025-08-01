@@ -6,9 +6,10 @@ import { MapPin, Search } from "lucide-react";
 
 interface CitySelectorProps {
   onCitySelect: (city: string) => void;
+  onLogout?: () => void;
 }
 
-const CitySelector = ({ onCitySelect }: CitySelectorProps) => {
+const CitySelector = ({ onCitySelect, onLogout }: CitySelectorProps) => {
   const [pincode, setPincode] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
 
@@ -30,6 +31,15 @@ const CitySelector = ({ onCitySelect }: CitySelectorProps) => {
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
+      {onLogout && (
+        <Button 
+          variant="outline"
+          onClick={onLogout}
+          className="absolute top-4 right-4 z-10"
+        >
+          Logout
+        </Button>
+      )}
       <Card className="w-full max-w-2xl shadow-warm">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-foreground mb-2">
