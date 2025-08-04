@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Star, Clock, MapPin, Heart, Phone, MessageCircle, ArrowLeft, ShoppingCart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { springBootAuth } from "@/services/springBootAuth";
+import { useCart } from "@/contexts/CartContext";
+import CartDrawer from "@/components/Cart/CartDrawer";
 import cookImage from "@/assets/cook-profile.jpg";
 
 interface CookProfileProps {
@@ -15,19 +17,13 @@ interface CookProfileProps {
   onLogout?: () => void;
 }
 
-interface CartItem {
-  id: string;
-  name: string;
-  price: string;
-  quantity: number;
-}
 
 const CookProfile = ({ cookId, onBack, onSelectPlan, onLogout }: CookProfileProps) => {
   const [selectedMealType, setSelectedMealType] = useState("lunch");
   const [cookData, setCookData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [cart, setCart] = useState<CartItem[]>([]);
   const { toast } = useToast();
+  const { addToCart } = useCart();
 
   // Fetch cook data from backend
   useEffect(() => {
@@ -126,23 +122,14 @@ const CookProfile = ({ cookId, onBack, onSelectPlan, onLogout }: CookProfileProp
     }
   ];
 
-  const addToCart = (item: any) => {
-    const existingItem = cart.find(cartItem => cartItem.id === `${item.name}-${selectedMealType}`);
-    
-    if (existingItem) {
-      setCart(cart.map(cartItem => 
-        cartItem.id === existingItem.id 
-          ? { ...cartItem, quantity: cartItem.quantity + 1 }
-          : cartItem
-      ));
-    } else {
-      setCart([...cart, {
-        id: `${item.name}-${selectedMealType}`,
-        name: `${item.name} (${selectedMealType})`,
-        price: item.price,
-        quantity: 1
-      }]);
-    }
+  const handleAddToCart = (item: any) => {
+    addToCart({
+      id: `${item.name}-${selectedMealType}-${cookId}`,
+      name: `${item.name} (${selectedMealType})`,
+      price: item.price,
+      cookId,
+      cookName: cookData?.name || "Unknown Cook"
+    });
     
     toast({
       title: "Added to cart",
@@ -186,15 +173,19 @@ const CookProfile = ({ cookId, onBack, onSelectPlan, onLogout }: CookProfileProp
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Home
             </Button>
-            {onLogout && (
-              <Button 
-                variant="outline" 
-                className="bg-white/10 text-white border-white/30 hover:bg-white/20"
-                onClick={onLogout}
-              >
-                Logout
-              </Button>
-            )}
+            
+            <div className="flex gap-2">
+              <CartDrawer className="bg-white/10 text-white border-white/30 hover:bg-white/20" />
+              {onLogout && (
+                <Button 
+                  variant="outline" 
+                  className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+                  onClick={onLogout}
+                >
+                  Logout
+                </Button>
+              )}
+            </div>
           </div>
           
           <div className="flex flex-col md:flex-row gap-6 text-primary-foreground">
@@ -296,7 +287,7 @@ const CookProfile = ({ cookId, onBack, onSelectPlan, onLogout }: CookProfileProp
                         <Button 
                           variant="food" 
                           size="sm"
-                          onClick={() => addToCart(item)}
+                          onClick={() => handleAddToCart(item)}
                         >
                           <ShoppingCart className="h-3 w-3 mr-1" />
                           Add to Cart
