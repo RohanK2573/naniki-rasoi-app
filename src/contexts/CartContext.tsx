@@ -11,12 +11,16 @@ export interface CartItem {
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity'>) => void;
+  currentCookId: string | null;
+  addToCart: (item: Omit<CartItem, 'quantity'>) => Promise<boolean>;
   removeFromCart: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
+  clearAllCarts: () => void;
+  switchToCook: (cookId: string) => void;
   getTotalItems: () => number;
   getTotalAmount: () => number;
+  hasItemsFromOtherCook: (cookId: string) => boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -34,26 +38,53 @@ interface CartProviderProps {
 }
 
 export const CartProvider = ({ children }: CartProviderProps) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [carts, setCarts] = useState<Record<string, CartItem[]>>({});
+  const [currentCookId, setCurrentCookId] = useState<string | null>(null);
 
-  const addToCart = (item: Omit<CartItem, 'quantity'>) => {
-    setCart(prevCart => {
-      const existingItem = prevCart.find(cartItem => cartItem.id === item.id);
+  const cart = currentCookId ? (carts[currentCookId] || []) : [];
+
+  const addToCart = async (item: Omit<CartItem, 'quantity'>): Promise<boolean> => {
+    // Check if there are items from a different cook
+    if (currentCookId && currentCookId !== item.cookId && cart.length > 0) {
+      return false; // Return false to indicate cook switching is needed
+    }
+
+    // Set current cook if not set or switching to new cook
+    if (!currentCookId || currentCookId !== item.cookId) {
+      setCurrentCookId(item.cookId);
+    }
+
+    setCarts(prevCarts => {
+      const cookCart = prevCarts[item.cookId] || [];
+      const existingItem = cookCart.find(cartItem => cartItem.id === item.id);
       
       if (existingItem) {
-        return prevCart.map(cartItem =>
-          cartItem.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        );
+        return {
+          ...prevCarts,
+          [item.cookId]: cookCart.map(cartItem =>
+            cartItem.id === item.id
+              ? { ...cartItem, quantity: cartItem.quantity + 1 }
+              : cartItem
+          )
+        };
       } else {
-        return [...prevCart, { ...item, quantity: 1 }];
+        return {
+          ...prevCarts,
+          [item.cookId]: [...cookCart, { ...item, quantity: 1 }]
+        };
       }
     });
+
+    return true;
   };
 
   const removeFromCart = (itemId: string) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== itemId));
+    if (!currentCookId) return;
+    
+    setCarts(prevCarts => ({
+      ...prevCarts,
+      [currentCookId]: prevCarts[currentCookId]?.filter(item => item.id !== itemId) || []
+    }));
   };
 
   const updateQuantity = (itemId: string, quantity: number) => {
@@ -62,15 +93,36 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       return;
     }
     
-    setCart(prevCart =>
-      prevCart.map(item =>
+    if (!currentCookId) return;
+    
+    setCarts(prevCarts => ({
+      ...prevCarts,
+      [currentCookId]: prevCarts[currentCookId]?.map(item =>
         item.id === itemId ? { ...item, quantity } : item
-      )
-    );
+      ) || []
+    }));
   };
 
   const clearCart = () => {
-    setCart([]);
+    if (!currentCookId) return;
+    
+    setCarts(prevCarts => ({
+      ...prevCarts,
+      [currentCookId]: []
+    }));
+  };
+
+  const clearAllCarts = () => {
+    setCarts({});
+    setCurrentCookId(null);
+  };
+
+  const switchToCook = (cookId: string) => {
+    setCurrentCookId(cookId);
+  };
+
+  const hasItemsFromOtherCook = (cookId: string) => {
+    return currentCookId !== null && currentCookId !== cookId && cart.length > 0;
   };
 
   const getTotalItems = () => {
@@ -88,12 +140,16 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     <CartContext.Provider
       value={{
         cart,
+        currentCookId,
         addToCart,
         removeFromCart,
         updateQuantity,
         clearCart,
+        clearAllCarts,
+        switchToCook,
         getTotalItems,
         getTotalAmount,
+        hasItemsFromOtherCook,
       }}
     >
       {children}

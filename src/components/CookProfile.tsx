@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { springBootAuth } from "@/services/springBootAuth";
 import { useCart } from "@/contexts/CartContext";
 import CartDrawer from "@/components/Cart/CartDrawer";
+import CookSwitchDialog from "@/components/Cart/CookSwitchDialog";
 import cookImage from "@/assets/cook-profile.jpg";
 
 interface CookProfileProps {
@@ -22,8 +23,10 @@ const CookProfile = ({ cookId, onBack, onSelectPlan, onLogout }: CookProfileProp
   const [selectedMealType, setSelectedMealType] = useState("lunch");
   const [cookData, setCookData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showSwitchDialog, setShowSwitchDialog] = useState(false);
+  const [pendingItem, setPendingItem] = useState<any>(null);
   const { toast } = useToast();
-  const { addToCart } = useCart();
+  const { addToCart, hasItemsFromOtherCook, clearCart, switchToCook, currentCookId, cart } = useCart();
 
   // Fetch cook data from backend
   useEffect(() => {
@@ -122,19 +125,54 @@ const CookProfile = ({ cookId, onBack, onSelectPlan, onLogout }: CookProfileProp
     }
   ];
 
-  const handleAddToCart = (item: any) => {
-    addToCart({
+  const handleAddToCart = async (item: any) => {
+    const cartItem = {
       id: `${item.name}-${selectedMealType}-${cookId}`,
       name: `${item.name} (${selectedMealType})`,
       price: item.price,
       cookId,
       cookName: cookData?.name || "Unknown Cook"
-    });
+    };
+
+    // Check if we need to show switch dialog
+    if (hasItemsFromOtherCook(cookId)) {
+      setPendingItem(cartItem);
+      setShowSwitchDialog(true);
+      return;
+    }
+
+    const success = await addToCart(cartItem);
     
-    toast({
-      title: "Added to cart",
-      description: `${item.name} added to your cart`,
-    });
+    if (success) {
+      toast({
+        title: "Added to cart",
+        description: `${item.name} added to your cart`,
+      });
+    }
+  };
+
+  const handleConfirmSwitch = async () => {
+    if (pendingItem) {
+      clearCart();
+      switchToCook(cookId);
+      await addToCart(pendingItem);
+      
+      toast({
+        title: "Cart switched",
+        description: `${pendingItem.name} has been added to your new cart`,
+      });
+    }
+    setShowSwitchDialog(false);
+    setPendingItem(null);
+  };
+
+  const handleCancelSwitch = () => {
+    setShowSwitchDialog(false);
+    setPendingItem(null);
+  };
+
+  const getCurrentCookName = () => {
+    return cart.length > 0 ? cart[0].cookName : '';
   };
 
   if (loading) {
@@ -355,6 +393,15 @@ const CookProfile = ({ cookId, onBack, onSelectPlan, onLogout }: CookProfileProp
           </TabsContent>
         </Tabs>
       </div>
+
+      <CookSwitchDialog
+        isOpen={showSwitchDialog}
+        onOpenChange={setShowSwitchDialog}
+        currentCookName={getCurrentCookName()}
+        newCookName={cookData?.name || ''}
+        onConfirmSwitch={handleConfirmSwitch}
+        onCancel={handleCancelSwitch}
+      />
     </div>
   );
 };
