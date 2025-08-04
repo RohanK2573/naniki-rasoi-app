@@ -1,58 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Clock, MapPin, Heart } from "lucide-react";
 import heroImage from "@/assets/hero-tiffin.jpg";
 import cookImage from "@/assets/cook-profile.jpg";
+import { LocationData } from "@/components/LocationSelector";
+import { locationService, Cook, LocationBasedRecommendation } from "@/services/locationService";
 
 interface HomePageProps {
-  selectedCity: string;
+  selectedLocation: LocationData | null;
   onCookSelect: (cookId: string) => void;
   onLogout?: () => void;
+  onLocationChange: () => void;
 }
 
-const HomePage = ({ selectedCity, onCookSelect, onLogout }: HomePageProps) => {
+const HomePage = ({ selectedLocation, onCookSelect, onLogout, onLocationChange }: HomePageProps) => {
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [availableCooks, setAvailableCooks] = useState<Cook[]>([]);
+  const [recommendations, setRecommendations] = useState<LocationBasedRecommendation[]>([]);
 
-  const featuredCooks = [
-    {
-      id: "1",
-      name: "Sunita Auntie",
-      rating: 4.8,
-      speciality: "North Indian",
-      area: "Bandra West",
-      price: "₹120/meal",
-      reviews: 156,
-      time: "45 min",
-      image: cookImage,
-      tags: ["Homestyle", "Healthy", "Vegetarian"]
-    },
-    {
-      id: "2", 
-      name: "Kamala Ben",
-      rating: 4.9,
-      speciality: "Gujarati Thali",
-      area: "Andheri East",
-      price: "₹100/meal",
-      reviews: 203,
-      time: "30 min",
-      image: cookImage,
-      tags: ["Traditional", "Pure Veg", "Jain Friendly"]
-    },
-    {
-      id: "3",
-      name: "Meera Sharma",
-      rating: 4.7,
-      speciality: "South Indian",
-      area: "Powai",
-      price: "₹110/meal",
-      reviews: 89,
-      time: "40 min", 
-      image: cookImage,
-      tags: ["Authentic", "Sambar Rice", "Rasam"]
+  useEffect(() => {
+    if (selectedLocation) {
+      const cooks = locationService.getCooksByLocation(selectedLocation);
+      const recs = locationService.getLocationRecommendations(selectedLocation);
+      setAvailableCooks(cooks);
+      setRecommendations(recs);
     }
-  ];
+  }, [selectedLocation]);
 
   const foodCategories = [
     { name: "North Indian", icon: "🍛", count: 45 },
@@ -81,11 +56,15 @@ const HomePage = ({ selectedCity, onCookSelect, onLogout }: HomePageProps) => {
               <h1 className="text-2xl font-bold">Nani ki Rasoi</h1>
               <div className="flex items-center text-sm opacity-90">
                 <MapPin className="h-4 w-4 mr-1" />
-                Delivering in {selectedCity}
+                Delivering to {selectedLocation?.displayName || 'Select location'}
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" className="bg-primary-foreground text-primary">
+              <Button 
+                variant="outline" 
+                className="bg-primary-foreground text-primary"
+                onClick={onLocationChange}
+              >
                 Change Location
               </Button>
               {onLogout && (
@@ -124,6 +103,32 @@ const HomePage = ({ selectedCity, onCookSelect, onLogout }: HomePageProps) => {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Location-based Recommendations */}
+        {recommendations.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold mb-6">Popular in Your Area</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {recommendations.map((rec) => (
+                <Card key={rec.dishName} className="hover:shadow-warm transition-shadow cursor-pointer">
+                  <img
+                    src={rec.image}
+                    alt={rec.dishName}
+                    className="w-full h-32 object-cover rounded-t-lg"
+                  />
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold mb-1">{rec.dishName}</h3>
+                    <p className="text-sm text-muted-foreground mb-2">by {rec.cookName}</p>
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-warm">{rec.price}</span>
+                      <Badge variant="secondary">{rec.popularity}% loved</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Food Categories */}
         <section className="mb-12">
           <h2 className="text-2xl font-bold mb-6">Browse by Cuisine</h2>
@@ -140,11 +145,21 @@ const HomePage = ({ selectedCity, onCookSelect, onLogout }: HomePageProps) => {
           </div>
         </section>
 
-        {/* Featured Cooks */}
+        {/* Available Cooks */}
         <section>
-          <h2 className="text-2xl font-bold mb-6">Featured Cooks Near You</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredCooks.map((cook) => (
+          <h2 className="text-2xl font-bold mb-6">
+            Available Cooks {selectedLocation && `(${availableCooks.length} found)`}
+          </h2>
+          {availableCooks.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">No cooks available in your area yet.</p>
+              <Button variant="warm" onClick={onLocationChange}>
+                Try Different Location
+              </Button>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {availableCooks.map((cook) => (
               <Card key={cook.id} className="hover:shadow-warm transition-all duration-300 cursor-pointer">
                 <div className="relative">
                   <img
@@ -215,6 +230,7 @@ const HomePage = ({ selectedCity, onCookSelect, onLogout }: HomePageProps) => {
               </Card>
             ))}
           </div>
+          )}
         </section>
       </div>
     </div>

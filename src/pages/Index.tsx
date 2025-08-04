@@ -1,20 +1,22 @@
 import { useState, useEffect } from "react";
 import SplashScreen from "@/components/SplashScreen";
-import CitySelector from "@/components/CitySelector";
+import LocationSelector, { LocationData } from "@/components/LocationSelector";
 import HomePage from "@/components/HomePage";
 import CookProfile from "@/components/CookProfile";
 import LoginPage from "@/components/Auth/LoginPage";
 import SignupPage from "@/components/Auth/SignupPage";
 import { springBootAuth } from "@/services/springBootAuth";
+import { useLocationStorage } from "@/hooks/useLocationStorage";
 
-type AppState = "splash" | "city-selection" | "home" | "cook-profile" | "login" | "signup";
+type AppState = "splash" | "location-selection" | "home" | "cook-profile" | "login" | "signup";
 
 const Index = () => {
   const [appState, setAppState] = useState<AppState>("splash");
-  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
   const [selectedCookId, setSelectedCookId] = useState("");
   const [user, setUser] = useState<any>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const { storedLocation, saveLocation } = useLocationStorage();
 
   useEffect(() => {
     // Check for existing auth token on app load using the auth service
@@ -25,6 +27,11 @@ const Index = () => {
       setUser(savedUser);
     }
 
+    // Check for stored location
+    if (storedLocation) {
+      setSelectedLocation(storedLocation);
+    }
+
     // Handle OAuth callback
     const urlParams = new URLSearchParams(window.location.search);
     const isOAuthCallback = window.location.pathname === '/oauth/callback' || urlParams.get('code');
@@ -32,7 +39,7 @@ const Index = () => {
     if (isOAuthCallback) {
       handleOAuthCallback();
     }
-  }, []);
+  }, [storedLocation]);
 
   const handleOAuthCallback = async () => {
     try {
@@ -44,9 +51,9 @@ const Index = () => {
       setAuthToken(token);
       setUser(user);
       
-      // Clean up URL and redirect to city selection
+      // Clean up URL and redirect to location selection
       window.history.replaceState({}, document.title, '/');
-      setAppState("city-selection");
+      setAppState(storedLocation ? "home" : "location-selection");
     } catch (error) {
       console.error('OAuth callback error:', error);
       // If OAuth fails, go back to splash
@@ -55,11 +62,12 @@ const Index = () => {
   };
 
   const handleSplashComplete = () => {
-    setAppState("city-selection");
+    setAppState(storedLocation ? "home" : "location-selection");
   };
 
-  const handleCitySelect = (city: string) => {
-    setSelectedCity(city);
+  const handleLocationSelect = (location: LocationData) => {
+    setSelectedLocation(location);
+    saveLocation(location);
     setAppState("home");
   };
 
@@ -80,13 +88,13 @@ const Index = () => {
   const handleLogin = (token: string, userData: any) => {
     setAuthToken(token);
     setUser(userData);
-    setAppState("city-selection");
+    setAppState(storedLocation ? "home" : "location-selection");
   };
 
   const handleSignup = (token: string, userData: any) => {
     setAuthToken(token);
     setUser(userData);
-    setAppState("city-selection");
+    setAppState(storedLocation ? "home" : "location-selection");
   };
 
   const handleLogout = () => {
@@ -126,17 +134,19 @@ const Index = () => {
           onBack={handleAuthBack}
         />
       )}
-      {appState === "city-selection" && (
-        <CitySelector 
-          onCitySelect={handleCitySelect} 
+      {appState === "location-selection" && (
+        <LocationSelector 
+          onLocationSelect={handleLocationSelect} 
           onLogout={handleLogout}
+          currentLocation={selectedLocation}
         />
       )}
       {appState === "home" && (
         <HomePage 
-          selectedCity={selectedCity} 
+          selectedLocation={selectedLocation} 
           onCookSelect={handleCookSelect}
           onLogout={handleLogout}
+          onLocationChange={() => setAppState("location-selection")}
         />
       )}
       {appState === "cook-profile" && (
