@@ -149,7 +149,10 @@ const Index = () => {
           selectedLocation={selectedLocation} 
           onCookSelect={handleCookSelect}
           onLogout={handleLogout}
-          onLocationChange={() => setAppState("location-selection")}
+          onLocationChange={() => {
+            console.log("Location change requested");
+            setAppState("location-selection");
+          }}
         />
       )}
       {appState === "cook-profile" && (
