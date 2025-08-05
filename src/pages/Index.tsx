@@ -16,6 +16,8 @@ const Index = () => {
   const [selectedCookId, setSelectedCookId] = useState("");
   const [user, setUser] = useState<any>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  
+  console.log("Current app state:", appState, "User:", user);
   const { storedLocation, saveLocation } = useLocationStorage();
 
   useEffect(() => {
@@ -62,6 +64,7 @@ const Index = () => {
   };
 
   const handleSplashComplete = () => {
+    console.log("Splash complete, stored location:", storedLocation);
     setAppState(storedLocation ? "home" : "location-selection");
   };
 
