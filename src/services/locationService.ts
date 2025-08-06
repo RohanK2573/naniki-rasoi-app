@@ -122,8 +122,21 @@ const mockRecommendations: LocationBasedRecommendation[] = [
 
 export class LocationService {
   
-  // Filter cooks based on location
-  getCooksByLocation(location: LocationData): Cook[] {
+  // Filter cooks based on location - now uses backend service
+  async getCooksByLocation(location: LocationData): Promise<Cook[]> {
+    try {
+      // Import backend service dynamically to avoid circular dependency
+      const { backendService } = await import('@/services/backendService');
+      return await backendService.getCooksByLocation(location);
+    } catch (error) {
+      console.error('Error fetching cooks from backend, using mock data:', error);
+      // Fallback to mock data
+      return this.getMockCooksByLocation(location);
+    }
+  }
+
+  // Mock implementation as fallback
+  private getMockCooksByLocation(location: LocationData): Cook[] {
     if (!location) return mockCooks;
 
     return mockCooks.filter(cook => {
@@ -147,14 +160,21 @@ export class LocationService {
     });
   }
 
-  // Get location-based recommendations
-  getLocationRecommendations(location: LocationData): LocationBasedRecommendation[] {
-    // In real app, this would be based on popular dishes in the area
-    const availableCooks = this.getCooksByLocation(location);
-    
-    return mockRecommendations.filter(rec => 
-      availableCooks.some(cook => cook.id === rec.cookId)
-    );
+  // Get location-based recommendations - now uses backend service
+  async getLocationRecommendations(location: LocationData): Promise<LocationBasedRecommendation[]> {
+    try {
+      // Import backend service dynamically to avoid circular dependency
+      const { backendService } = await import('@/services/backendService');
+      return await backendService.getLocationRecommendations(location);
+    } catch (error) {
+      console.error('Error fetching recommendations from backend, using mock data:', error);
+      // Fallback to mock data
+      const availableCooks = await this.getCooksByLocation(location);
+      
+      return mockRecommendations.filter(rec => 
+        availableCooks.some(cook => cook.id === rec.cookId)
+      );
+    }
   }
 
   // Calculate distance between two coordinates (Haversine formula)

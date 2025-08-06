@@ -22,10 +22,18 @@ const HomePage = ({ selectedLocation, onCookSelect, onLogout, onLocationChange }
 
   useEffect(() => {
     if (selectedLocation) {
-      const cooks = locationService.getCooksByLocation(selectedLocation);
-      const recs = locationService.getLocationRecommendations(selectedLocation);
-      setAvailableCooks(cooks);
-      setRecommendations(recs);
+      const loadData = async () => {
+        try {
+          const cooks = await locationService.getCooksByLocation(selectedLocation);
+          const recs = await locationService.getLocationRecommendations(selectedLocation);
+          setAvailableCooks(cooks);
+          setRecommendations(recs);
+        } catch (error) {
+          console.error('Error loading cooks and recommendations:', error);
+        }
+      };
+      
+      loadData();
     }
   }, [selectedLocation]);
 
